@@ -1,62 +1,141 @@
-def heuristic(node, goal):
-    # Calculate the Manhattan distance heuristic between the current node and the goal node
-    x1, y1 = node
-    x2, y2 = goal
-    return abs(x1 - x2) + abs(y1 - y2)
+g=0
+def print_board(elements):
+    for i in range(9):
+        if i%3 == 0:
+            print()
+        if elements[i]==-1:
+            print("_", end = " ")
+        else:
+            print(elements[i], end = " ")
+    print()
+
+def solvable(start):
+    inv=0
+
+    for i in range(9):
+        if start[i] <= 1:
+            continue
+        for j in range(i+1,9):
+            if start[j]==-1:
+                continue
+            if start[i]>start[j]:
+                inv+=1
+    if inv%2==0:
+        return True
+    return False
+
+def heuristic(start,goal):
+    global g
+    h = 0
+    for i in range(9):
+        for j in range(9):
+            if start[i] == goal[j] and start[i] != -1:
+                h += (abs(j-i))//3 + (abs(j-i))%3
+    return h + g
+
+def moveleft(start,position):
+    start[position],start[position-1]= start[position-1],start[position]
+
+def moveright(start,position):
+    start[position],start[position+1]= start[position+1],start[position]
+
+def moveup(start,position):
+    start[position],start[position-3]= start[position-3],start[position]
+
+def movedown(start,position):
+    start[position],start[position+3]= start[position+3],start[position]
 
 
-def a_star_search(graph, start, goal):
-    # Initialize the open and closed sets
-    open_set = [start]
-    came_from = {}
-    g_score = {start: 0}
-    f_score = {start: heuristic(start, goal)}
+def movetile(start,goal):
+    emptyat= start.index(-1)
+    row = emptyat//3
+    col = emptyat%3
+    t1,t2,t3,t4 = start[:],start[:],start[:],start[:]
+    f1,f2,f3,f4 = 100,100,100,100
 
-    while open_set:
-        # Find the node with the lowest f_score value
-        current = min(open_set, key=lambda node: f_score[node])
+    if col -1 >=0:
+        moveleft(t1, emptyat)
+        f1 = heuristic(t1, goal)
+    if col+1<3:
+        moveright(t2, emptyat)
+        f2 = heuristic(t2, goal)
+    if row + 1 <3:
+        movedown(t3, emptyat)
+        f3 = heuristic(t3, goal)
+    if row-1>=0:
+        moveup(t4, emptyat)
+        f4 = heuristic(t4, goal)
 
-        if current == goal:
-            # Reconstruct the path
-            path = [current]
-            while current in came_from:
-                current = came_from[current]
-                path.append(current)
-            path.reverse()
-            return path
+    min_heuristic = min(f1, f2,f3,f4)
 
-        open_set.remove(current)
-        for neighbor in graph[current]:
-            # Calculate the tentative g_score
-            tentative_g_score = g_score[current] + 1
+    if f1==min_heuristic:
+        moveleft(start, emptyat)
+    elif f2==min_heuristic:
+        moveright(start, emptyat)
+    elif f3==min_heuristic:
+        movedown(start, emptyat)
+    elif f4 == min_heuristic:
+        moveup(start, emptyat)
+        
+        
+def solveEight(start,goal):
+    global g
+    g+=1
+    movetile(start,goal)
+    print_board(start)
+    f = heuristic(start,goal)
+    if f == g:
+        print("Solved in {} moves".format(f))
+        return
 
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                # Update the path
-                came_from[neighbor] = current
-                g_score[neighbor] = tentative_g_score
-                f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, goal)
-                if neighbor not in open_set:
-                    open_set.append(neighbor)
-
-    return None
+    solveEight(start,goal)
 
 
-# Test the A* algorithm
-graph = {
-    (0, 0): [(1, 0), (0, 1)],
-    (1, 0): [(0, 0), (2, 0)],
-    (0, 1): [(0, 0), (0, 2)],
-    (2, 0): [(1, 0), (3, 0)],
-    (0, 2): [(0, 1), (0, 3)],
-    (3, 0): [(2, 0)]
-}
+def main():
+    global g
+    start = list()
+    goal = list()
+    print("Enter the start state:(Enter -1 for empty):")
+    for i in range(9):
+        start.append(int(input()))
 
-start_node = (0, 0)
-goal_node = (3, 0)
-path = a_star_search(graph, start_node, goal_node)
-if path:
-    print(f"Shortest path from {start_node} to {goal_node}:")
-    for node in path:
-        print(node)
-else:
-    print(f"No path found from {start_node} to {goal_node}.")
+    print("Enter the goal state:(Enter -1 for empty):")
+    for i in range(9):
+        goal.append(int(input()))
+
+    print_board(start)
+
+    # To check if solvable
+    if solvable(start):
+        solveEight(start,goal)
+        print("Solved in {} moves".format(g))
+    else:
+        print("Not possible to solve")
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+# Test Cases
+# 
+# 1
+# 2
+# 3
+# -1
+# 4 
+# 6
+# 7 
+# 5 
+# 8 
+
+# 1 
+# 2 
+# 3 
+# 4 
+# 5 
+# 6 
+# 7 
+# 8
+# -1
